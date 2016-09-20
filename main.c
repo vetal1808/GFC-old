@@ -8,7 +8,7 @@ int main()
 {
 	usart_init();
 	char rx [5];
-	char str [] = "Hello world!";
+	char str [] = "Hello world!\r\n";
 	UARTSend(str, sizeof(str));
 	while(1)
 	{
