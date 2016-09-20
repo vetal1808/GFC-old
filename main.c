@@ -1,24 +1,24 @@
 
 
 #include "stm32f10x.h"
-
-uint32_t lol;
+#include "stdint.h"
+#include "easy_uart.h"
 
 int main()
 {
-
-	init_timer();
-	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN; //Тактирование порта C
-	GPIOC->CRH |= GPIO_CRH_MODE13_0;//Вывод PC8 порта C - выход
-	GPIOC->CRH &= ~GPIO_CRH_CNF13;//Режим Push-Pull для вывода PC8 порта C
-	lol = micros();
+	usart_init();
+	char rx [5];
+	char str [] = "Hello world!";
+	UARTSend(str, sizeof(str));
 	while(1)
 	{
-		if(micros()-lol>500000)
+		uint8_t l = USART1_available();
+		if(l)
 		{
-			lol = micros();
-			GPIOC->ODR ^= GPIO_ODR_ODR13;
+			uint8_t i = USART1_read(rx, 5);
+			i = i;
 		}
+
 	}
 }
 
