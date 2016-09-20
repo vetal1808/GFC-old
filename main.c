@@ -1,19 +1,22 @@
 #include "I2CRoutines.h"
 #include "BMP085_timer.h"
+#include "mpu6050.h"
 int main(void)
 {
 	I2C_LowLevel_Init(I2C1);
 
-	BMP085_begin(BMP085_ULTRAHIGHRES);
-	/*
-	uint8_t b = 0xAA;
-	uint8_t rx_buff[16];
-	Status _stat = Error, _stat2 = Error;
-	_stat = I2C_Master_BufferWrite(I2C1, &b, 1, Polling, (0x77<<1));
-	_stat2 = I2C_Master_BufferRead(I2C1, rx_buff, 16, Polling, (0x77<<1));
-	 */
+	int16_t ax =0 , ay=0, az =0, gx =0, gy=0, gz=0,i;
+	MPU6050_initialize();
+	MPU6050_setDLPFMode(0x03);
+	MPU6050_setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
+	MPU6050_setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+	MPU6050_setSampleRateDiv(3);
+	for(i=0;i<20000;i++);
+	MPU6050_getMotion6(&ax,&ay,&az,&gx,&gy,&gz,0);
+	while(1)
+	{
+		MPU6050_getMotion6(&ax,&ay,&az,&gx,&gy,&gz,0);
+		for(i=0;i<20000;i++);
+	}
 
-    while(1)
-    {
-    }
 }

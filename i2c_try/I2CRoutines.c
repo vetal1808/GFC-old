@@ -695,7 +695,44 @@ void I2C_DMAConfig(I2C_TypeDef* I2Cx, uint8_t* pBuffer, uint32_t BufferSize, uin
 }
 
 
+Status I2C1_write_bytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
+{
+	uint8_t buff[17] , i;
+	buff[0] = regAddr;
+	if(length>16)
+		length = 16;
+	for(i=1; i<=length; i++)
+		buff[i] = data[i-1];
+	return I2C_Master_BufferWrite(I2C1, buff, length+1, Polling, (devAddr << 1));
+}
+Status I2C1_read_bytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
+{
+	if(I2C_Master_BufferWrite(I2C1, &regAddr, 1, Polling, (devAddr << 1)))
+		return I2C_Master_BufferRead(I2C1, data, length, Polling, (devAddr << 1));
+	else
+		return Error;
 
+}
+Status I2C1_write_bits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
+{
+	uint8_t b;
+	if(I2C1_read_bytes(devAddr, regAddr, 1, &b))
+	{
+		uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+		data <<= (bitStart - length + 1); // shift data into correct position
+		data &= mask; // zero all non-important bits in data
+		b &= ~(mask); // zero all important bits in existing byte
+		b |= data; // combine data with existing byte
+		return I2C1_write_bytes(devAddr, regAddr, 1, &b);
+	}
+	else
+		return Error;
+
+}
+Status I2C1_write_bit(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t data)
+{
+	return I2C1_write_bits(devAddr, regAddr, bitStart, 1, data);
+}
 
 
 /**

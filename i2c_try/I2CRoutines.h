@@ -139,6 +139,11 @@ void I2C_Slave_BufferReadWrite(I2C_TypeDef* I2Cx,I2C_ProgrammingModel Mode);
 void I2C_LowLevel_Init(I2C_TypeDef* I2Cx);
 void I2C_DMAConfig(I2C_TypeDef* I2Cx, uint8_t* pBuffer, uint32_t BufferSize, uint32_t Direction);
 
+Status I2C1_write_bytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+Status I2C1_read_bytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+Status I2C1_write_bits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+Status I2C1_write_bit(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t data);
+
 #endif
 
 /******************* (C) COPYRIGHT 2010 STMicroelectronics *****END OF FILE****/
