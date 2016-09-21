@@ -25,5 +25,5 @@ void delay_us(uint32_t us)
 }
 uint32_t micros()
 {
-	return (timer_overflow<<16) | (0xFFFF-TIM2->ARR);
+	return (timer_overflow<<16) | (TIM2->CNT);
 }

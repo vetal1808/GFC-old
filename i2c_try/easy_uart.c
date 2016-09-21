@@ -212,6 +212,19 @@ void UARTSend(uint8_t *pucBuffer, uint8_t ulCount)
     //
     // Loop while there are more characters to send.
     //
+//	pucBuffer--;
+    while(ulCount--)
+    {
+        USART_SendData(USART1, *pucBuffer++);// Last Version USART_SendData(USART1,(uint16_t) *pucBuffer++);
+        /* Loop until the end of transmission */
+        while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+    }
+}
+void UARTSend_str(const uint8_t *pucBuffer, uint8_t ulCount)
+{
+    //
+    // Loop while there are more characters to send.
+    //
 	pucBuffer--;
     while(ulCount--)
     {
@@ -220,5 +233,4 @@ void UARTSend(uint8_t *pucBuffer, uint8_t ulCount)
         while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
     }
 }
-
 /******************* (C) COPYRIGHT 2007 STMicroelectronics *****END OF FILE****/

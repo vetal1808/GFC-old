@@ -9,7 +9,7 @@
 #define BMP085_timer_H_
 
 
-#include <math.h>
+
 #include "I2CRoutines.h"
 
 

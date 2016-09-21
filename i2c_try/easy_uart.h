@@ -13,4 +13,5 @@ uint8_t USART1_read(uint8_t * str, uint8_t len);
 uint8_t USART1_readLine(uint8_t * str, uint8_t len);
 void usart_init();
 void UARTSend(uint8_t *pucBuffer, uint8_t ulCount);
+void UARTSend_str(const uint8_t *pucBuffer, uint8_t ulCount);
 #endif
