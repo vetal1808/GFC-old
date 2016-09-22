@@ -7,7 +7,10 @@ void TIM2_IRQHandler(void) //Функция обработчика прерывания от таймера 6
     TIM2->SR &= ~TIM_SR_UIF; //Сбрасываем бит вызова прерывания.
     timer_overflow++;
 }
-
+uint32_t micros()
+{
+	return (timer_overflow<<16) | (TIM2->CNT);
+}
 void init_timer()
 {
 	  NVIC_SetPriority(TIM2_IRQn, 1); //Приоритет прерывания
@@ -21,9 +24,6 @@ void init_timer()
 void delay_us(uint32_t us)
 {
 	uint32_t start = micros();
-	while(micors()-start<us);
+	while(micros()-start<us);
 }
-uint32_t micros()
-{
-	return (timer_overflow<<16) | (TIM2->CNT);
-}
+
