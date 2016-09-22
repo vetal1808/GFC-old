@@ -32,6 +32,7 @@ volatile uint16_t rd_pos1 = 0, wr_pos1 = 0;
 volatile uint8_t rx_buff1[buff_size];
 volatile uint16_t rd_pos2 = 0, wr_pos2 = 0;
 volatile uint8_t rx_buff2[buff_size];
+volatile uint8_t line_counter2 = 0;
 
 
 
@@ -45,16 +46,7 @@ ErrorStatus HSEStartUpStatus;
 void NVIC_Configuration(USART_TypeDef* USARTx);
 void USART_Configuration(USART_TypeDef* USARTx);
 void GPIO_Configuration(USART_TypeDef* USARTx);
-uint16_t my_sub(uint16_t a, uint16_t b)
-{
-	uint16_t res;
-	if(a>=b)
-		res = a-b;
-	else {
-		res = a-b;
-	}
-	return res;
-}
+
 
 /******************************************************************************/
 /*            STM32F10x Peripherals Interrupt Handlers                        */
@@ -67,22 +59,22 @@ uint16_t my_sub(uint16_t a, uint16_t b)
   */
 void USART1_IRQHandler(void)
 {
-  if ((USART1->SR & USART_FLAG_RXNE) != (u16)RESET)	        
-  {
-    rx_buff1[wr_pos1 % buff_size] = USART_ReceiveData(USART1);
-    wr_pos1++;
-    if((uint16_t)(wr_pos1 - rd_pos1) > buff_size) //overwriting received data
-      rd_pos1++;
+	if ((USART1->SR & USART_FLAG_RXNE) != (u16)RESET)
+	{
+		rx_buff1[wr_pos1 % buff_size] = USART_ReceiveData(USART1);
+		wr_pos1++;
+		if((uint16_t)(wr_pos1 - rd_pos1) > buff_size) //overwriting received data
+		  rd_pos1++;
 	}	
 }
 void USART2_IRQHandler(void)
 {
-  if ((USART2->SR & USART_FLAG_RXNE) != (u16)RESET)
-  {
-    rx_buff2[wr_pos2 % buff_size] = USART_ReceiveData(USART2);
-    wr_pos2++;
-    if((uint16_t)(wr_pos2 - rd_pos2) > buff_size) //overwriting received data
-      rd_pos2++;
+	if ((USART2->SR & USART_FLAG_RXNE) != (u16)RESET)
+	{
+		rx_buff2[wr_pos2 % buff_size] = USART_ReceiveData(USART2);
+		wr_pos2++;
+		if((uint16_t)(wr_pos2 - rd_pos2) > buff_size) //overwriting received data
+		  rd_pos2++;
 	}
 }
 uint16_t USART_available(USART_TypeDef* USARTx)
@@ -93,6 +85,25 @@ uint16_t USART_available(USART_TypeDef* USARTx)
 		if (USARTx == USART2) {
 			return (uint16_t)(wr_pos2 - rd_pos2);
 		}
+	return 0;
+}
+uint8_t USART_line_available(USART_TypeDef* USARTx)
+{
+	uint16_t r, w;
+	uint8_t * c;
+	if (USARTx == USART1) {
+		r= rd_pos1;
+		w= wr_pos1;
+		c = rx_buff1;
+	}else if (USARTx == USART2) {
+		r= rd_pos2;
+		w= wr_pos2;
+		c = rx_buff2;
+	}
+	for(;(uint16_t)(w-r)>0;r++){
+		if (c[r%buff_size] == '\n')
+			return 1;
+	}
 	return 0;
 }
 uint8_t USART_read(USART_TypeDef* USARTx, uint8_t * str, uint8_t len)
@@ -123,7 +134,7 @@ uint8_t USART_readLine(USART_TypeDef* USARTx, uint8_t * str, uint8_t len)
 	if(USARTx == USART1)
 	{
 		while(wr_pos1>rd_pos1 && i<len){
-		      str[i] = rx_buff1[rd_pos1];
+		      str[i] = rx_buff1[rd_pos1 % buff_size];
 		      i++;
 		      rd_pos1++;
 		      if(str[i-1] == '\n')
@@ -133,7 +144,7 @@ uint8_t USART_readLine(USART_TypeDef* USARTx, uint8_t * str, uint8_t len)
   	else{
   		if (USARTx == USART2) {
   			while(wr_pos2>rd_pos2 && i<len){
-  			      str[i] = rx_buff2[rd_pos2];
+  			      str[i] = rx_buff2[rd_pos2 % buff_size];
   			      i++;
   			      rd_pos2++;
   			      if(str[i-1] == '\n')

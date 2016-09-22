@@ -7,12 +7,18 @@
 #include "MadgwickAHRS.h"
 #include "timer.h"
 #include "BMP085_timer.h"
-
+#include "gps_parser.h"
 
 
 
 int main()
 {
+	USART_init(USART2);
+	while(1)
+	{
+		gps_update();
+	}
+	/*
 	init_timer();
 	uint8_t buffer1[64];
 	uint8_t buffer2[64];
@@ -34,6 +40,7 @@ int main()
 				USART_send(USART2, buffer2,i);
 			}
 		}
+		*/
 	/*
 
 	USART_init(USART1);
