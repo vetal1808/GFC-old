@@ -545,12 +545,9 @@ void I2C_LowLevel_Init(I2C_TypeDef* I2Cx)
         /* I2C1 clock enable */
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
         /* I2C1 SDA and SCL configuration */
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
-        GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
         GPIO_Init(GPIOB, &GPIO_InitStructure);
 
         /* Enable I2C1 reset state */
@@ -566,12 +563,9 @@ void I2C_LowLevel_Init(I2C_TypeDef* I2Cx)
         /* I2C2 clock enable */
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
         /* I2C1 SDA and SCL configuration */
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
-        GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
         GPIO_Init(GPIOB, &GPIO_InitStructure);
 
         /* Enable I2C2 reset state */

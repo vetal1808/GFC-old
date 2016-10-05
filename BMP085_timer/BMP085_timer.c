@@ -16,7 +16,8 @@ uint8_t BMP085_begin(uint8_t mode) {
 
 
 
-  if (BMP085_read8(0xD0) != 0x55) return 0;
+  if (BMP085_read8(0xD0) != 0x55)
+	  return 0;
 
   /* read calibration data */
   ac1 = BMP085_read16(BMP085_CAL_AC1);

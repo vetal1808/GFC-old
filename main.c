@@ -13,6 +13,31 @@
 
 int main()
 {
+
+
+
+
+	USART_init(USART1);
+	init_timer();
+	I2C_LowLevel_Init(I2C1);
+	BMP085_begin(BMP085_ULTRAHIGHRES);
+	while(1)
+	{
+		BMP085_readRawTemperature_reqest();
+		delay_us(5000);
+		uint16_t tmp1 = BMP085_readRawTemperature_ask();
+		BMP085_readRawPressure_reqest();
+		delay_us(25000);
+		uint32_t tmp2 = BMP085_readRawPressure_ask();
+		uint32_t press = BMP085_readPressure2(tmp1,tmp2);
+
+		send(press, 'A');
+		delay_us(300000);
+
+	}
+
+
+	/*
 	init_timer();
 	USART_init(USART1);
 	I2C_LowLevel_Init(I2C1);
@@ -43,6 +68,7 @@ int main()
 
 
 	}
+	*/
 }
 void send(int32_t val, char symb)
 {
