@@ -6,8 +6,18 @@
  */
 #include "BMP085_timer.h"
 #include <math.h>
+#include "timer.h"
 
-uint32_t suc_=0, fal_=0;
+#define BMP085_frq_update 4000
+
+uint8_t oversampling;
+
+int16_t ac1, ac2, ac3, b1, b2, mb, mc, md;
+uint16_t ac4, ac5, ac6;
+
+
+volatile float BMP_Altitude, BMP_zero_press;
+
 
 uint8_t BMP085_begin(uint8_t mode) {
   if (mode > BMP085_ULTRAHIGHRES)
@@ -83,7 +93,7 @@ uint32_t BMP085_readRawPressure_ask()
 
 	return ((tmp[0]<<8 | tmp[1]) >> (8-oversampling));
 }
-int32_t BMP085_readPressure2(uint16_t UT, uint32_t UP)
+int32_t BMP085_readPressure(uint16_t UT, uint32_t UP)
 {
 	int32_t B3, B5, B6, X1, X2, X3, p;
 	uint32_t B4, B7;
@@ -125,45 +135,72 @@ int32_t BMP085_readPressure2(uint16_t UT, uint32_t UP)
 	  return p;
 }
 
-float BMP085_readAltitude2(float sealevelPressure, float pressure)
+float BMP085_readAltitude(float pressure)
 {
-  return 44330 * (1.0 - pow(pressure /sealevelPressure,0.1903));
+  return 4433000 * (1.0 - pow(pressure /BMP_zero_press,0.1903));
 }
 
 
-void BMP085_update(float * Pressure)
+void BMP085_update()
 {
-	switch (BMP_state)
-			{
-			case 0 :
-			{
-				BMP085_readRawTemperature_reqest();
-				BMP_state++;
-				break;
-			}
-			case 2 :
-			{
+	static uint8_t BMP_state = 0, BMP_temp_skip = 0;
+	static uint32_t start_time;
+	static uint32_t BMP_tmp1, BMP_tmp2;
+
+	switch (BMP_state){
+		case 0 :{
+			BMP085_readRawTemperature_reqest();
+			start_time = micros();
+			BMP_state++;
+			break;
+		}
+		case 1 :{
+			if(micros() - start_time > 4499){
 				BMP_tmp1 = BMP085_readRawTemperature_ask();
 				BMP085_readRawPressure_reqest();
 				BMP_state++;
-				break;
+				start_time = micros();
 			}
-			case 15 :
-			{
+			break;
+		}
+		case 2 :{
+			if(micros() - start_time > 24999){
 				BMP_tmp2 = BMP085_readRawPressure_ask();
-				*Pressure = BMP085_readPressure2(BMP_tmp1,BMP_tmp2);
-				BMP_state = 0;
-				break;
-			}
-			default :
-			{
-				if (BMP_state <25)
-					BMP_state++;
-				else
+				BMP_Altitude = BMP085_readAltitude(BMP085_readPressure(BMP_tmp1,BMP_tmp2));
+				if(BMP_temp_skip < 5){ // skip temperature reading 5 times
+					BMP085_readRawPressure_reqest();
+					start_time = micros();
+					BMP_temp_skip++;
+				}
+				else {
 					BMP_state = 0;
-				break;
+					BMP_temp_skip = 0;
+				}
 			}
-			}
+			break;
+
+		}
+		default :{
+			BMP_state = 0;
+			break;
+		}
+	}
+}
+float BMP085_get_altitude(){
+	return BMP_Altitude;
+}
+uint32_t BMP085_meagure_press(){
+	uint32_t BMP_tmp1, BMP_tmp2;
+	BMP085_readRawTemperature_reqest();
+	delay_us(4500);
+	BMP_tmp1 = BMP085_readRawTemperature_ask();
+	BMP085_readRawPressure_reqest();
+	delay_us(24500);
+	BMP_tmp2 = BMP085_readRawPressure_ask();
+	return BMP085_readPressure(BMP_tmp1,BMP_tmp2);
+}
+void BMP085_set_zero_pressure(uint32_t z){
+	BMP_zero_press = z;
 }
 
 

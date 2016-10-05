@@ -21,20 +21,28 @@ int main()
 	init_timer();
 	I2C_LowLevel_Init(I2C1);
 	BMP085_begin(BMP085_ULTRAHIGHRES);
+
+	uint32_t start = micros();
+	int32_t alt = 0;
+	BMP085_set_zero_pressure(BMP085_meagure_press());
+	uint8_t skip = 0;
 	while(1)
 	{
-		BMP085_readRawTemperature_reqest();
-		delay_us(5000);
-		uint16_t tmp1 = BMP085_readRawTemperature_ask();
-		BMP085_readRawPressure_reqest();
-		delay_us(25000);
-		uint32_t tmp2 = BMP085_readRawPressure_ask();
-		uint32_t press = BMP085_readPressure2(tmp1,tmp2);
+		BMP085_update();
+		alt = BMP085_get_altitude();
 
-		send(press, 'A');
-		delay_us(300000);
+		if(skip == 6){
+			send(alt, 'A');
+			skip = 0;
+		}
+		else {
+			skip++;
+		}
 
+		while(micros()-start < period);
+		start += period;
 	}
+
 
 
 	/*
@@ -72,9 +80,13 @@ int main()
 }
 void send(int32_t val, char symb)
 {
-	uint8_t buf[6] = {0,0,0,0,0,0};
+	uint8_t buf[9];
 	itoa(val, buf,10);
+
+	uint8_t l = 0;
+	while (buf[l] != 0 && l < 9)
+		l++;
 	USART_send(USART1,&symb,1);
-	USART_send(USART1,buf,6);
+	USART_send(USART1,buf,l);
 	USART_send(USART1,"\n",1);
 }
