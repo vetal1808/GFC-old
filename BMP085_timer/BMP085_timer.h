@@ -8,7 +8,7 @@
 #ifndef BMP085_timer_H_
 #define BMP085_timer_H_
 
-
+#define BMP085_handler
 
 #include "I2CRoutines.h"
 
@@ -54,10 +54,12 @@
 	uint16_t BMP085_read16(uint8_t addr);
 	void BMP085_write8(uint8_t addr, uint8_t data);
 	void BMP085_update();
-	float BMP085_get_altitude();
+	int32_t BMP085_get_altitude();
 	uint32_t BMP085_meagure_press();
 	void BMP085_set_zero_pressure(uint32_t z);
+	void BMP085_Handler();
 
-
+	void BMP085_get_data(int32_t * altitude, int32_t * velocity);
+	void BMP085_update();
 
 #endif /* BMP085_H_ */
