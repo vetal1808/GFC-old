@@ -22,7 +22,7 @@
 //---------------------------------------------------------------------------------------------------
 // Definitions
 
-#define sampleTime 0.004f
+#define sampleTime 0.003f
 //#define sampleFreq	512.0f		// sample frequency in Hz
 #define beta		0.1f		// 2 * proportional gain
 

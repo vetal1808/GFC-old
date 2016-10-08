@@ -8,6 +8,7 @@
 #include "gps_parser.h"
 
 #define period 3000
+#define period_in_sec 0.003
 #define gyro1000_to_radians 1920.0
 #define int2G_to_float 0.059814453125 // convert 16bit int data 2G sens to sm/sec^2 in float
 
@@ -25,7 +26,9 @@ int main()
 	MPU6050_setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
 	MPU6050_setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
 	MPU6050_setSampleRateDiv(2);
+
 	BMP085_begin(BMP085_ULTRAHIGHRES);
+	BMP085_set_zero_pressure(BMP085_meagure_press());
 
 	int16_t ax = 0, ay = 0, az = 0;
 	int16_t gx = 0, gy = 0, gz = 0;
@@ -36,7 +39,7 @@ int main()
 	float ax_bias=0, ay_bias=0, az_bias=15985;
 	float vx = 0, vy = 0, vz = 0;
 	uint32_t skip = 0;
-	BMP085_set_zero_pressure(BMP085_meagure_press());
+
 	while(1)
 	{
 		while(micros()-sync_time<period);
@@ -44,40 +47,26 @@ int main()
 		MPU6050_getMotion6(&ax, &ay, &az, &gx, &gy, &gz, 0);
 		MadgwickAHRSupdateIMU((float)gx/gyro1000_to_radians, (float)gy/gyro1000_to_radians, (float)(gz)/(gyro1000_to_radians), ax, ay, az);
 		BMP085_update();
-		/*
+
 		float _ax = (float)ax, _ay = (float)ay, _az = (float)az;
-		rotate_by_quatern(&_ax, &_ay, &_az);
+		rotate_by_quatern(&_ax, &_ay, &_az); // acceleration in global coordinate
 
-		ax_bias += (_ax - ax_bias)*0.001;
-		ay_bias += (_ay - ay_bias)*0.001;
-		az_bias += (_az - az_bias)*0.001;
+		int32_t baro_alt_velocity, baro_alt;
+		BMP085_get_data(&baro_alt, &baro_alt_velocity);
 
-		vx+=(_ax - ax_bias)*int2G_to_float*0.004;
-		vy+=(_ay - ay_bias)*int2G_to_float*0.004;
-		vz+=(_az - az_bias)*int2G_to_float*0.004;
+		_az = (_az - az_bias)*int2G_to_float;
+		vz = ((_az*period_in_sec+vz)*0.9995)+((float)baro_alt_velocity*0.0005);
+		az_bias+=(vz-(float)baro_alt_velocity)*0.0001;
 
-		send((int32_t)(vx*400.), 'A');
-		send((int32_t)(vy*400.), 'B');
-		send((int32_t)(vz*400.), 'C');
+		float new_alt = (vz*period_in_sec+new_alt)*0.999+ baro_alt*0.001;
 
-		send((int32_t)((_ax - ax_bias)*10.), 'D');
-		send((int32_t)((_ay - ay_bias)*10.), 'E');
-		send((int32_t)((_az - az_bias)*10.), 'F');
-*/
-		if(skip == 9){
-			skip = 0;
-			int32_t tmp[2];
-			BMP085_get_data(tmp, tmp+1);
-			send(tmp[0]*100, 'A');
-			send(tmp[1]*10, 'B');
-			send(BMP085_get_altitude()*100, 'C');
+		send((int32_t)(_az*100.), 'A');
+		send((int32_t)(vz*300.), 'B');
+		send((int32_t)((az_bias-15985.)*100.), 'C');
+		send((int32_t)(new_alt*300.), 'D');
+		USART_send(USART3,"W\n",2);
 
-			send((micros()-sync_time), 'M');
-			USART_send(USART3,"W\n",2);
-		}
-		else {
-			skip++;
-		}
+
 
 
 
