@@ -10,8 +10,8 @@
 #include "helpers.h"
 #include "stab_alg.h"
 
-#define period 10000
-#define period_in_sec 0.010
+#define period 20000
+#define period_in_sec 0.020
 #define gyro1000_to_radians 0.00052083333
 #define int2G_to_float 0.059814453125 // convert 16bit int data 2G sens to sm/sec^2 in float
 
@@ -32,18 +32,24 @@ int main()
 		sync_time += period;
 		MPU6050_getFloatMotion6(&accel, &gyro);
 
+		int16_t tmp[6];
+		tmp[0] = accel.x*16.0;
+		tmp[1] = accel.y*16.0;
+		tmp[2] = accel.z*16.0;
+		tmp[3] = gyro.x*2000.0;
+		tmp[4] = gyro.y*2000.0;
+		tmp[5] = gyro.z*2000.0;
+//		load_tx_buffer(tmp);
+//		transmit_masked_channal();
+		receive_all_available();
+		/*
 		MadgwickAHRSupdateIMU(gyro.x, gyro.y, gyro.z, accel.x, accel.y, accel.z);
 
 		vector3 tmp = quaternion_decomposition(q);
 
 		stab_algorithm(q, gyro, &rotor4_thrust, average_thrust);
 
-		send((int16_t)(rotor4_thrust.RFC*50.0),'A');
-		send((int16_t)(rotor4_thrust.LFW*50.0),'B');
-		send((int16_t)(rotor4_thrust.RBW*50.0),'C');
-		send((int16_t)(rotor4_thrust.LBC*50.0),'G');
-		send(0,'W');
-
+*/
 	}
 
 }
@@ -53,7 +59,7 @@ int main()
 
 void setup(){
 	init_timer();
-	USART_init(USART3, 921600);
+	set_USARTn(USART3);
 	I2C_LowLevel_Init(I2C1);
 	MPU6050_initialize();
 	MPU6050_setDLPFMode(0x03);
@@ -63,17 +69,7 @@ void setup(){
 
 	BMP085_begin(BMP085_ULTRAHIGHRES);
 	BMP085_set_zero_pressure(BMP085_meagure_press());
+	set_mask(0xFF);
 }
 
-void send(int32_t val, char symb)
-{
-	uint8_t buf[9];
-	itoa(val, buf,10);
 
-	uint8_t l = 0;
-	while (buf[l] != 0 && l < 9)
-		l++;
-	USART_send(USART3,&symb,1);
-	USART_send(USART3,buf,l);
-	USART_send(USART3,"\n",1);
-}
