@@ -6,18 +6,52 @@
 #include "timer.h"
 #include "BMP085_timer.h"
 #include "gps_parser.h"
+#include "math.h"
+#include "helpers.h"
+#include "stab_alg.h"
 
-#define period 3000
-#define period_in_sec 0.003
-#define gyro1000_to_radians 1920.0
+#define period 10000
+#define period_in_sec 0.010
+#define gyro1000_to_radians 0.00052083333
 #define int2G_to_float 0.059814453125 // convert 16bit int data 2G sens to sm/sec^2 in float
 
 int main()
 {
 
+	setup();
+
+	vector3 accel, gyro;
+	rotor4 rotor4_thrust;
+	float average_thrust = 200.f;
+
+	uint32_t sync_time = micros();
+
+	while(1)
+	{
+		while(micros()-sync_time<period);
+		sync_time += period;
+		MPU6050_getFloatMotion6(&accel, &gyro);
+
+		MadgwickAHRSupdateIMU(gyro.x, gyro.y, gyro.z, accel.x, accel.y, accel.z);
+
+		vector3 tmp = quaternion_decomposition(q);
+
+		stab_algorithm(q, gyro, &rotor4_thrust, average_thrust);
+
+		send((int16_t)(rotor4_thrust.RFC*50.0),'A');
+		send((int16_t)(rotor4_thrust.LFW*50.0),'B');
+		send((int16_t)(rotor4_thrust.RBW*50.0),'C');
+		send((int16_t)(rotor4_thrust.LBC*50.0),'G');
+		send(0,'W');
+
+	}
+
+}
 
 
 
+
+void setup(){
 	init_timer();
 	USART_init(USART3, 921600);
 	I2C_LowLevel_Init(I2C1);
@@ -29,50 +63,8 @@ int main()
 
 	BMP085_begin(BMP085_ULTRAHIGHRES);
 	BMP085_set_zero_pressure(BMP085_meagure_press());
-
-	int16_t ax = 0, ay = 0, az = 0;
-	int16_t gx = 0, gy = 0, gz = 0;
-	int16_t pitch, roll, yaw;
-	uint8_t buff[6];
-	uint32_t sync_time = micros();
-
-	float ax_bias=0, ay_bias=0, az_bias=15985;
-	float vx = 0, vy = 0, vz = 0;
-	uint32_t skip = 0;
-
-	while(1)
-	{
-		while(micros()-sync_time<period);
-		sync_time = micros();
-		MPU6050_getMotion6(&ax, &ay, &az, &gx, &gy, &gz, 0);
-		MadgwickAHRSupdateIMU((float)gx/gyro1000_to_radians, (float)gy/gyro1000_to_radians, (float)(gz)/(gyro1000_to_radians), ax, ay, az);
-		BMP085_update();
-
-		float _ax = (float)ax, _ay = (float)ay, _az = (float)az;
-		rotate_by_quatern(&_ax, &_ay, &_az); // acceleration in global coordinate
-
-		int32_t baro_alt_velocity, baro_alt;
-		BMP085_get_data(&baro_alt, &baro_alt_velocity);
-
-		_az = (_az - az_bias)*int2G_to_float;
-		vz = ((_az*period_in_sec+vz)*0.9995)+((float)baro_alt_velocity*0.0005);
-		az_bias+=(vz-(float)baro_alt_velocity)*0.0001;
-
-		float new_alt = (vz*period_in_sec+new_alt)*0.999+ baro_alt*0.001;
-
-		send((int32_t)(_az*100.), 'A');
-		send((int32_t)(vz*300.), 'B');
-		send((int32_t)((az_bias-15985.)*100.), 'C');
-		send((int32_t)(new_alt*300.), 'D');
-		USART_send(USART3,"W\n",2);
-
-
-
-
-
-	}
-
 }
+
 void send(int32_t val, char symb)
 {
 	uint8_t buf[9];

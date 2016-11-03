@@ -161,36 +161,7 @@ uint32_t getFloat(uint8_t s, uint8_t f, uint8_t * buff)
 	return res;
 }
 
-/*
-uint8_t new_mess_ready(uint8_t * s, uint8_t * f, uint8_t * buff)
-{
-	uint8_t i, flag = 0;
-	for (i = _rd_pos; i<_wr_pos; i++)
-	{
-		if (buff[i] == '$')
-		{
-			*s = i + 1;
-			flag++;
-			break;
-		}
-	}
-	for ( ; i<_wr_pos; i++)
-	{
-		if (buff[i] == '\n')
-		{
-			if (buff[i - 1] == '\r')
-			{
-				*f = i - 2;
-				flag++;
-				break;
-			}
-		}
-	}
-	return flag;
 
-
-}
-*/
 uint8_t get_type(uint8_t * buff)
 {
 	if (isGPGGA(buff))
@@ -199,7 +170,7 @@ uint8_t get_type(uint8_t * buff)
 		return 2;
 	return 0;
 }
-//$GPVTG,293.47,T,,M,1.71,N,3.17,K,A*34
+//example $GPVTG,293.47,T,,M,1.71,N,3.17,K,A*34
 void GPVTG_parse(uint8_t * buff)
 {
 	uint8_t comma[9], i = 0, j = 0;
@@ -256,25 +227,4 @@ void relativ_cords(uint32_t * x, uint32_t * y, uint32_t * h)
 	*h = altitude - altitude0;
 
 }
-int32_t my_atoi (uint8_t *buf, uint8_t l)
-{
-	int32_t tmp=0;
-	uint8_t i =0, k;
-	for(i = 0; buf[i] == ' ' && i<l; i++); //skip spaces
-	if(buf[i] == '-')
-	{
-		k = i;
-		i++;
-	}
-	for(; i<l;i++)
-	{
-		if(buf[i]>= '0' && buf[i]<= '9')
-			tmp = tmp*10+buf[i]-'0';
-		else
-			return 0;
-	}
-	if(buf[k] == '-')
-		tmp*=(-1);
-	return tmp;
 
-}

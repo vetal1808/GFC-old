@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "I2CRoutines.h"
-
+#include "helpers.h"
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
 #define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_LOW
@@ -358,7 +358,8 @@
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
-
+#define gyro250_to_radians 1.3315805450396191230191732547673e-4
+#define int2G_to_float 0.059814453125 // convert 16bit int data 2G sens to sm/sec^2 in float
 
 void MPU6050_initialize();
 void MPU6050_setClockSource(uint8_t source);
@@ -372,8 +373,7 @@ void MPU6050_getMotion6(int16_t* ax,
                         int16_t* az,
                         int16_t* gx,
                         int16_t* gy,
-                        int16_t* gz,
-                        uint8_t use_calib);
+                        int16_t* gz);
 void MPU6050_calibration();
 
 void MPU6050_setAccelFIFOEnabled(uint8_t flag);
@@ -382,5 +382,7 @@ uint16_t MPU6050_getFIFOCount();
 void MPU6050_getFIFOBytes(uint8_t *data, uint8_t length);
 void MPU6050_setGyrosFIFOEnabled(uint8_t enabled);
 void MPU6050_setSampleRateDiv(uint8_t data);
+
+void MPU6050_getFloatMotion6(vector3 * acc, vector3 * gyro);
 
 #endif /* MPU6050_H_ */
