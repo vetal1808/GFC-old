@@ -1,7 +1,10 @@
 #include "mpu6050.h"
 
 uint8_t mpu6050_dev_addr;
-int32_t gx0=0, gy0=0, gz0=0;
+int16_t gx0=0, gy0=0, gz0=0;
+
+float gyro_ratio = gyro250_to_radians;
+float accel_ratio = int2G_to_float;
 
 void MPU6050_initialize()
 {
@@ -24,6 +27,7 @@ void MPU6050_setClockSource(uint8_t source)
 
 void MPU6050_setFullScaleGyroRange(uint8_t range)
 {
+	gyro_ratio = gyro250_to_radians * (range + 1);
 	I2C1_write_bits(mpu6050_dev_addr,
                   MPU6050_RA_GYRO_CONFIG,
                   MPU6050_GCONFIG_FS_SEL_BIT,
@@ -33,6 +37,7 @@ void MPU6050_setFullScaleGyroRange(uint8_t range)
 
 void MPU6050_setFullScaleAccelRange(uint8_t range)
 {
+	accel_ratio = int2G_to_float * (range + 1);
 	I2C1_write_bits(mpu6050_dev_addr,
                   MPU6050_RA_ACCEL_CONFIG,
                   MPU6050_ACONFIG_AFS_SEL_BIT,
@@ -85,8 +90,7 @@ inline void MPU6050_getMotion6(int16_t* ax,
                         int16_t* az,
                         int16_t* gx,
                         int16_t* gy,
-                        int16_t* gz,
-                        uint8_t use_calib)
+                        int16_t* gz)
 {
 
     uint8_t rx_buf[14];
@@ -98,30 +102,40 @@ inline void MPU6050_getMotion6(int16_t* ax,
     *gx = (((int16_t)rx_buf[8]) << 8) | rx_buf[9];
     *gy = (((int16_t)rx_buf[10]) << 8) | rx_buf[11];
     *gz = (((int16_t)rx_buf[12]) << 8) | rx_buf[13];
-    if(use_calib == 1)
-    {
-		*gx -= gx0;
-		*gy -= gy0;
-		*gz -= gz0;
-    }
+
+	*gx -= gx0;
+	*gy -= gy0;
+	*gz -= gz0;
 
 }
 void MPU6050_calibration(){
 	int i =0;
 	int16_t tmp[6];
-	for(i=0; i<1000; i++)
+	int32_t x = 0,y = 0,z = 0;
+	for(i=0; i<10000; i++)
 	{
-		MPU6050_getMotion6(&tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5], 0);
-		gx0 += tmp[3];
-		gy0 += tmp[4];
-		gz0 += tmp[5];
+		MPU6050_getMotion6(&tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5]);
+		x += tmp[3];
+		y += tmp[4];
+		z += tmp[5];
 	}
 
-	gx0 /= 1000;
-	gy0 /= 1000;
-	gz0 /= 1000;
+	gx0 = x / 10000;
+	gy0 = y / 10000;
+	gz0 = z / 10000;
+}
 
+void MPU6050_getFloatMotion6(vector3 * acc, vector3 * gyro){
+	int16_t tmp[6];
+	MPU6050_getMotion6(&tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5]);
 
+	acc->x = (float)tmp[0]*accel_ratio;
+	acc->y = (float)tmp[1]*accel_ratio;
+	acc->z = (float)tmp[2]*accel_ratio;
+
+	gyro->x = (float)tmp[3]*gyro_ratio;
+	gyro->y = (float)tmp[4]*gyro_ratio;
+	gyro->z = (float)tmp[5]*gyro_ratio;
 }
 
 /** Get full-scale gyroscope range.
