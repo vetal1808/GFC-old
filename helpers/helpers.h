@@ -38,4 +38,6 @@ void limit_value16(int16_t * val, int16_t lim);
 void limit_value32(int32_t * val, int32_t lim);
 void limit_value64(int64_t * val, int64_t lim);
 uint8_t no_overlim(int16_t val, int16_t lim);
+vector4 quaterns_multiplication(vector4 A, vector4 B);
+vector4 euclid_to_quaterion(vector3 euclid);
 #endif /* HELPERS_H_ */

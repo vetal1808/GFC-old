@@ -10,7 +10,7 @@ void ESC_init()
 	 */
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA , ENABLE);
 	GPIO_InitTypeDef PORT;
-	PORT.GPIO_Pin = (GPIO_Pin_0 |GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3);
+	PORT.GPIO_Pin = (GPIO_Pin_0 |GPIO_Pin_1 | GPIO_Pin_2 |GPIO_Pin_3);
 	PORT.GPIO_Mode = GPIO_Mode_AF_PP;
 	PORT.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init(GPIOA, &PORT);

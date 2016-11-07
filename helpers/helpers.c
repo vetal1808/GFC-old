@@ -73,6 +73,37 @@ void itoa
 	}
 }
 */
+
+vector4 quaterns_multiplication(vector4 A, vector4 B){
+	vector4 tmp;
+	tmp.q0 = A.q0*B.q0 - A.q1*B.q1 - A.q2*B.q2 - A.q3*B.q3;
+	tmp.q1 = A.q2*B.q3 - A.q3*B.q2 + A.q0*B.q1 + A.q1*B.q0;
+	tmp.q2 = A.q3*B.q1 - A.q1*B.q3 + A.q0*B.q2 + A.q2*B.q0;
+	tmp.q3 = A.q1*B.q2 - A.q2*B.q1 + A.q0*B.q3 + A.q3*B.q0;
+	return tmp;
+}
+
+vector4 euclid_to_quaterion(vector3 euclid){
+	euclid.x*=0.5;
+	euclid.y*=0.5;
+	euclid.z*=0.5;
+	float sin_fi = sin(euclid.x);
+	float sin_teta = sin(euclid.y);
+	float sin_psi = sin(euclid.z);
+	float cos_fi = cos(euclid.x);
+	float cos_teta = cos(euclid.y);
+	float cos_psi = cos(euclid.z);
+	float cos_fi_cos_teta = cos_fi * cos_teta;
+	float sin_fi_cos_teta = sin_fi * cos_teta;
+	float cos_fi_sin_teta = cos_fi * sin_teta;
+	float sin_fi_sin_teta = sin_fi * sin_teta;
+	vector4 tmp;
+	tmp.q0 = - cos_fi_cos_teta * cos_psi - sin_fi_sin_teta * sin_psi;
+	tmp.q1 = sin_fi_cos_teta * cos_psi - cos_fi_sin_teta * sin_psi;
+	tmp.q2 = cos_fi_sin_teta * cos_psi + sin_fi_cos_teta * sin_psi;
+	tmp.q3 = cos_fi_cos_teta * sin_psi - sin_fi_sin_teta * cos_psi;
+	return tmp;
+}
 int16_t degree_sub360(int16_t val1, int16_t val2)
 {
 
@@ -95,7 +126,7 @@ float limit(float value, float limit){
 	if(value > limit)
 		return limit;
 	if(value < -limit)
-		return limit;
+		return -limit;
 	return value;
 }
 

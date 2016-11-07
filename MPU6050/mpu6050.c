@@ -112,7 +112,7 @@ void MPU6050_calibration(){
 	int i =0;
 	int16_t tmp[6];
 	int32_t x = 0,y = 0,z = 0;
-	for(i=0; i<1000; i++)
+	for(i=0; i<10000; i++)
 	{
 		MPU6050_getMotion6(&tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5]);
 		x += tmp[3];
@@ -120,9 +120,9 @@ void MPU6050_calibration(){
 		z += tmp[5];
 	}
 
-	gx0 = x / 1000;
-	gy0 = y / 1000;
-	gz0 = z / 1000;
+	gx0 = x / 10000;
+	gy0 = y / 10000;
+	gz0 = z / 10000;
 }
 
 void MPU6050_getFloatMotion6(vector3 * acc, vector3 * gyro){
