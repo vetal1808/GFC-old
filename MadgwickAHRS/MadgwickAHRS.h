@@ -12,7 +12,7 @@
 //=====================================================================================================
 #ifndef MadgwickAHRS_h
 #define MadgwickAHRS_h
-#define rad_to_int 3437.746770784939
+
 //----------------------------------------------------------------------------------------------------
 // Variable declaration
 #include <stdint.h>
@@ -29,8 +29,7 @@ extern volatile vector4 q;
 
 void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
-void get_euclid(int16_t * pitch, int16_t * roll, int16_t * yaw);
-void rotate_by_quatern(float * x, float * y, float * z);
+
 #endif
 //=====================================================================================================
 // End of file

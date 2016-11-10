@@ -22,8 +22,7 @@
 //---------------------------------------------------------------------------------------------------
 // Definitions
 
-#define sampleTime 0.020f
-//#define sampleFreq	512.0f		// sample frequency in Hz
+#define sampleTime update_period_in_sec
 #define beta		0.1f		// 2 * proportional gain
 
 //---------------------------------------------------------------------------------------------------
@@ -222,38 +221,6 @@ float invSqrt(float x) {
 	y = y * (1.5f - (halfx * y * y));
 	return y;
 }
-
-void get_euclid(int16_t * pitch, int16_t * roll, int16_t * yaw)
-{
-	*roll = atan2 (2*(q.q0*q.q1+q.q2*q.q3),1-2*(q.q1*q.q1+q.q2*q.q2))*rad_to_int;
-	*pitch = -asin (2*(q.q0*q.q2-q.q3*q.q1))* rad_to_int;
-	*yaw = -atan2 (2*(q.q0*q.q3+q.q1*q.q2),1-2*(q.q2*q.q2+q.q3*q.q3))* rad_to_int;
-}
-
-
-void rotate_by_quatern(float * x, float * y, float * z)
-{
-	float q1q1, q2q2, q3q3,
-	q0q1,q0q2,q0q3,
-	q1q2,q1q3,
-	q2q3;
-	q0q1 = q.q0 * q.q1;
-	q0q2 = q.q0 * q.q2;
-	q0q3 = q.q0 * q.q3;
-	q1q1 = q.q1 * q.q1;
-	q1q2 = q.q1 * q.q2;
-	q1q3 = q.q1 * q.q3;
-	q2q2 = q.q2 * q.q2;
-	q2q3 = q.q2 * q.q3;
-	q3q3 = q.q3 * q.q3;
-	float _x = *x, _y = *y, _z = *z;
-	*x = 2.0f * ((0.5f - q2q2 - q3q3)*_x + (q1q2 - q0q3)*(_y)		 + (q1q3 + q0q2)*(_z));
-	*y = 2.0f * ((q1q2 + q0q3)*_x 		 + (0.5f - q1q1 - q3q3)*(_y) + (q2q3 - q0q1)*(_z));
-	*z = 2.0f * ((q1q3 - q0q2)*_x 		 + (q2q3 + q0q1)*(_y) 	     + (0.5f - q1q1 - q2q2)*(_z));
-
-
-}
-
 //====================================================================================================
 // END OF CODE
 //====================================================================================================

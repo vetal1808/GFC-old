@@ -27,7 +27,7 @@ float PID(float error, float d_error, uint8_t integral_switcher, float * integra
 }
 
 rotor4 calc_rotor4_thrust(vector3 torque_of_axis, float average_thrust){
-	rotor4 tmp;//!TODO check sings
+	rotor4 tmp;
 	tmp.LFW = (uint16_t)(average_thrust - (torque_of_axis.x + torque_of_axis.y - torque_of_axis.z));
 	tmp.RFC = (uint16_t)(average_thrust - (torque_of_axis.x - torque_of_axis.y + torque_of_axis.z));
 	tmp.LBC = (uint16_t)(average_thrust - (-torque_of_axis.x + torque_of_axis.y + torque_of_axis.z));
@@ -74,7 +74,6 @@ void set_I_gain(float val){
 void set_D_gain(float val){
     D_gain = val;
 }
-
 void set_P_limit(float val){
 	P_limit = val;
 }

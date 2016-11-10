@@ -108,11 +108,11 @@ inline void MPU6050_getMotion6(int16_t* ax,
 	*gz -= gz0;
 
 }
-void MPU6050_calibration(){
+void MPU6050_calibration(uint16_t num_of_samples){
 	int i =0;
 	int16_t tmp[6];
 	int32_t x = 0,y = 0,z = 0;
-	for(i=0; i<10000; i++)
+	for(i=0; i<num_of_samples; i++)
 	{
 		MPU6050_getMotion6(&tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5]);
 		x += tmp[3];
@@ -120,9 +120,9 @@ void MPU6050_calibration(){
 		z += tmp[5];
 	}
 
-	gx0 = x / 10000;
-	gy0 = y / 10000;
-	gz0 = z / 10000;
+	gx0 = x / num_of_samples;
+	gy0 = y / num_of_samples;
+	gz0 = z / num_of_samples;
 }
 
 void MPU6050_getFloatMotion6(vector3 * acc, vector3 * gyro){
@@ -186,5 +186,6 @@ void MPU6050_setGyrosFIFOEnabled(uint8_t enabled) {
 }
 
 void MPU6050_setSampleRateDiv(uint8_t data) {
+    data--;
 	I2C1_write_bytes(mpu6050_dev_addr, MPU6050_RA_SMPLRT_DIV, 1, &data);
 }

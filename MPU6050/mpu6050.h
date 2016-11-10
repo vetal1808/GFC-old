@@ -374,7 +374,7 @@ void MPU6050_getMotion6(int16_t* ax,
                         int16_t* gx,
                         int16_t* gy,
                         int16_t* gz);
-void MPU6050_calibration();
+void MPU6050_calibration(uint16_t);
 
 void MPU6050_setAccelFIFOEnabled(uint8_t flag);
 void MPU6050_setFIFOEnabled(uint8_t enabled);

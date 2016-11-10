@@ -28,51 +28,6 @@ int32_t my_atoi (uint8_t *buf, uint8_t l)
 	return tmp;
 
 }
-/*
-void itoa
-(
-	char *buf,
-	int base,
-	int d
-)
-{
-	char *p = buf;
-	char *p1, *p2;
-	unsigned long ud = d;
-	int divisor = 10;
-
-
-	if (base == 'd' && d < 0) {
-			*p++ = '-';
-			buf++;
-			ud = -d;
-	} else if (base == 'x') {
-			divisor = 16;
-	}
-
-
-	do {
-			int remainder = ud % divisor;
-
-			*p++ = (remainder < 10) ? remainder + '0' : remainder + 'a' - 10;
-			ud /= divisor;
-	} while (ud);
-
-
-
-
-
-	p1 = buf;
-	p2 = p - 1;
-	while (p1 < p2) {
-			char tmp = *p1;
-			*p1 = *p2;
-			*p2 = tmp;
-			p1++;
-			p2--;
-	}
-}
-*/
 
 vector4 quaterns_multiplication(vector4 A, vector4 B){
 	vector4 tmp;
@@ -104,24 +59,6 @@ vector4 euclid_to_quaterion(vector3 euclid){
 	tmp.q3 = cos_fi_cos_teta * sin_psi - sin_fi_sin_teta * cos_psi;
 	return tmp;
 }
-int16_t degree_sub360(int16_t val1, int16_t val2)
-{
-
-	int16_t tmp = val1 - val2;
-	if(tmp >= 0 )
-	{
-		if(tmp>180*degree_to_int)
-			tmp-=(360*degree_to_int);
-		return tmp;
-	}
-	else
-	{
-		if(tmp<-180*degree_to_int)
-			tmp+=(360*degree_to_int);
-		return tmp;
-	}
-}
-
 float limit(float value, float limit){
 	if(value > limit)
 		return limit;
@@ -129,36 +66,31 @@ float limit(float value, float limit){
 		return -limit;
 	return value;
 }
-
-void limit_value16(int16_t * val, int16_t lim)
+void euclid_from_quatern(vector4 q ,vector3_int16 * return_vector)
 {
-	if(*val > lim)
-		*val = lim;
-	else
-		if(*val < -lim)
-			*val = -lim;
+	return_vector->x = atan2 (2*(q.q0*q.q1+q.q2*q.q3),1-2*(q.q1*q.q1+q.q2*q.q2))*rad_to_minuteArc;
+	return_vector->y = -asin (2*(q.q0*q.q2-q.q3*q.q1))* rad_to_minuteArc;
+	return_vector->z = -atan2 (2*(q.q0*q.q3+q.q1*q.q2),1-2*(q.q2*q.q2+q.q3*q.q3))* rad_to_minuteArc;
 }
 
-void limit_value32(int32_t * val, int32_t lim)
+
+void rotate_vector3_by_quatern(vector4 q, vector3 * return_vector)
 {
-	if(*val > lim)
-		*val = lim;
-	else
-		if(*val < -lim)
-			*val = -lim;
-}
-void limit_value64(int64_t * val, int64_t lim)
-{
-	if(*val > lim)
-		*val = lim;
-	else
-		if(*val < -lim)
-			*val = -lim;
-}
-uint8_t no_overlim(int16_t val, int16_t lim)
-{
-	if(abs(val)<lim)
-		return 1;
-	else
-		return 0;
+	float q1q1, q2q2, q3q3,
+	q0q1,q0q2,q0q3,
+	q1q2,q1q3,
+	q2q3;
+	q0q1 = q.q0 * q.q1;
+	q0q2 = q.q0 * q.q2;
+	q0q3 = q.q0 * q.q3;
+	q1q1 = q.q1 * q.q1;
+	q1q2 = q.q1 * q.q2;
+	q1q3 = q.q1 * q.q3;
+	q2q2 = q.q2 * q.q2;
+	q2q3 = q.q2 * q.q3;
+	q3q3 = q.q3 * q.q3;
+	float _x = return_vector->x, _y = return_vector->y, _z = return_vector->z;
+	return_vector->x = 2.0f * ((0.5f - q2q2 - q3q3)*_x + (q1q2 - q0q3)*(_y)		 + (q1q3 + q0q2)*(_z));
+	return_vector->y = 2.0f * ((q1q2 + q0q3)*_x 		 + (0.5f - q1q1 - q3q3)*(_y) + (q2q3 - q0q1)*(_z));
+	return_vector->z = 2.0f * ((q1q3 - q0q2)*_x 		 + (q2q3 + q0q1)*(_y) 	     + (0.5f - q1q1 - q2q2)*(_z));
 }

@@ -1,67 +1,71 @@
 #include "telemetry.h"
+#include "stab_alg.h"
 
-USART_TypeDef * USART;
-
-#define rx_channal_num 12
-#define tx_channal_num 12
-#define package_size 6
-#define max_val 10000
-
-volatile int16_t rx_channal[rx_channal_num];
-volatile uint32_t refresh_mask = 0;
-
-volatile int16_t tx_channal[tx_channal_num];
-uint32_t tx_mask = 0;
-
-void set_USARTn(USART_TypeDef* USARTx){
-	USART = USARTx;
-	USART_init(USARTx, 921600);
-}
-
-void receive_all_available(){
-	if(USART_line_available(USART)){
-		uint8_t tmp_buff[package_size+2];
-		USART_readLine(USART, tmp_buff, package_size+2);
-		tmp_buff[0] -= 'A';
-		tmp_buff[package_size+1] = NULL;
-		if(tmp_buff[0]<(rx_channal_num)){
-			rx_channal[tmp_buff[0]] = atoi(tmp_buff+1);
-			refresh_mask |= (1 << tmp_buff[0]);
-		}
+void tx_update(vector4 summary_quatern, uint16_t computing_time){
+	static uint8_t skip_counter = 0;
+	const uint8_t skip_num = 3;
+	if(skip_counter<skip_num){
+		skip_counter++;
+		return;
 	}
+	skip_counter = 0;
+	vector3_int16 euclid_angles;
+	euclid_from_quatern(summary_quatern, &euclid_angles);
+    int16_t tmp_array[rx_channal_num];
+	tmp_array[0] = euclid_angles.x*6;
+	tmp_array[1] = euclid_angles.y*6;
+	tmp_array[2] = euclid_angles.z*3;
+	tmp_array[3] = (int16_t)(Ox.x*200.0);
+	tmp_array[4] = (int16_t)(Ox.y*200.0);
+	tmp_array[5] = (int16_t)(Ox.z*200.0);
+	tmp_array[6] = (int16_t)(Oy.x*200.0);
+	tmp_array[7] = (int16_t)(Oy.y*200.0);
+	tmp_array[8] = (int16_t)(Oy.z*200.0);
+	tmp_array[9] = (int16_t)(Oz.x*200.0);
+	tmp_array[10] = (int16_t)(Oz.y*200.0);
+	tmp_array[11] = (int16_t)(Oz.z*200.0);
+	tmp_array[12] = computing_time;
+    load_tx_buffer(tmp_array);
+	transmit_masked_channal();
 }
-void transmit_masked_channal(){
-	uint8_t i = 0;
-	for(i=0;i<tx_channal_num;i++){
-		if(tx_mask && (1<<i)){
-			uint8_t tmp_buff[package_size+2];
-			itoa((tx_channal[i]),tmp_buff+1,10);
-			int j;
-			for(j=2 ; j < package_size+2; j++)
-				if(tmp_buff[j] == 0){
-					tmp_buff[j] = '\n';
-					break;
-				}
-			j++;
-			tmp_buff[0] = 'A' + i;
-			USART_send(USART3,tmp_buff,j);
-		}
+
+void rx_update(vector4 * RC_quaternion, float * avarage_thrust){
+    receive_all_available();
+    int16_t rx_array[rx_channal_num];
+    get_rx_buffer(rx_array);
+	
+	set_P_gain((float)(rx_array[3])*2.0);
+	set_I_gain((float)(rx_array[4])*2.0);
+	set_D_gain((float)(rx_array[5]/2.0));
+	set_P_limit((float)(rx_array[6]));
+	set_I_limit((float)(rx_array[7]));
+	set_D_limit((float)(rx_array[8]));
+	set_tx_mask(rx_array[11]);
+	add_to_channal(-1,12);
+	if(rx_array[12]>1){
+		*avarage_thrust = (float)rx_array[9];
+		calculate_RC_angles((vector3_int16){rx_array[0], rx_array[1], rx_array[2]}, RC_quaternion);
 	}
-	USART_send(USART3,"W0\n",3);
+	else{ //if lose connection with pilot set half-thrust and zero angles
+		*avarage_thrust = (float)(rx_array[9]/2);
+		calculate_RC_angles((vector3_int16){0, 0, rx_array[2]}, RC_quaternion);
+	}
+
+
+	/*
+		rx_array[10] - motor_mask
+		rx_array[11] - transmit_mask
+		rx_array[12] - lose connection
+		
+	*/
 }
-void set_tx_mask(uint32_t val){
-	tx_mask = val;
-}
-void load_tx_buffer(int16_t * p){
-	uint8_t i = 0;
-	for(i = 0; i < tx_channal_num;i++)
-		tx_channal[i] = p[i];
-}
-void get_rx_buffer(int16_t * p){
-	uint8_t i = 0;
-	for(i = 0; i < rx_channal_num;i++)
-		p[i] = rx_channal[i];
-}
-uint32_t get_refresh_mask(){
-	return refresh_mask;
+
+void calculate_RC_angles(vector3_int16 RC_raw_data, vector4 * return_quaternion){
+	static float RC_yaw = 0.0;
+	RC_yaw += RC_raw_data.z*minuteArc_to_rad*update_period_in_sec;
+	vector3 RC_angles;
+	RC_angles.x = RC_raw_data.x*minuteArc_to_rad;
+	RC_angles.y = RC_raw_data.y*minuteArc_to_rad;
+	RC_angles.z = RC_yaw;
+	*return_quaternion = euclid_to_quaterion(RC_angles);
 }
