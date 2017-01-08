@@ -9,6 +9,7 @@
 
 //debug intermediate data
 vector3 Ox, Oy, Oz;
+vector3 torque;
 
 void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, float average_thrust);
 vector3 quaternion_decomposition(vector4 q);

@@ -28,10 +28,10 @@ float PID(float error, float d_error, uint8_t integral_switcher, float * integra
 
 rotor4 calc_rotor4_thrust(vector3 torque_of_axis, float average_thrust){
 	rotor4 tmp;
-	tmp.LFW = (uint16_t)(average_thrust - (torque_of_axis.x + torque_of_axis.y - torque_of_axis.z));
-	tmp.RFC = (uint16_t)(average_thrust - (torque_of_axis.x - torque_of_axis.y + torque_of_axis.z));
-	tmp.LBC = (uint16_t)(average_thrust - (-torque_of_axis.x + torque_of_axis.y + torque_of_axis.z));
-	tmp.RBW = (uint16_t)(average_thrust - (-torque_of_axis.x - torque_of_axis.y - torque_of_axis.z));
+	tmp.LFW = (uint16_t)(average_thrust - (torque_of_axis.x + torque_of_axis.y + torque_of_axis.z));
+	tmp.RFC = (uint16_t)(average_thrust - (torque_of_axis.x - torque_of_axis.y - torque_of_axis.z));
+	tmp.LBC = (uint16_t)(average_thrust - (-torque_of_axis.x + torque_of_axis.y - torque_of_axis.z));
+	tmp.RBW = (uint16_t)(average_thrust - (-torque_of_axis.x - torque_of_axis.y + torque_of_axis.z));
 	return tmp;
 }
 vector3 quaternion_decomposition(vector4 q){
@@ -47,7 +47,7 @@ void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, fl
 	static float integral_sum [3] = {0.0f, 0.0f, 0.0f};
 	vector3 axis_errors = quaternion_decomposition(quaternion);
 
-	vector3 torque_of_axis;
+	//vector3 torque;
 	uint8_t integral_switcher = 0;
 	if(average_thrust>integration_trottle)
 		integral_switcher = 1;
@@ -58,11 +58,11 @@ void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, fl
 		rotor4_thrust->RFC = 0;
 		return;
 	}
-	torque_of_axis.x = PID(axis_errors.x, gyro.x, integral_switcher, &integral_sum[0], &Ox);
-	torque_of_axis.y = PID(axis_errors.y, gyro.y, integral_switcher, &integral_sum[1], &Oy);
-	torque_of_axis.z = PID(axis_errors.z, gyro.z, integral_switcher, &integral_sum[2], &Oz);
+	torque.x = PID(axis_errors.x, gyro.x, integral_switcher, &integral_sum[0], &Ox);
+	torque.y = PID(axis_errors.y, gyro.y, integral_switcher, &integral_sum[1], &Oy);
+	torque.z = PID(axis_errors.z, gyro.z, integral_switcher, &integral_sum[2], &Oz);
 
-	*rotor4_thrust = calc_rotor4_thrust(torque_of_axis, average_thrust);
+	*rotor4_thrust = calc_rotor4_thrust(torque, average_thrust);
 }
 
 void set_P_gain(float val){

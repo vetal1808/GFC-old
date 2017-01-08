@@ -54,10 +54,11 @@ void setup(){
 	set_USARTn(USART3);
 	I2C_LowLevel_Init(I2C1);
 	MPU6050_initialize();
-	MPU6050_setDLPFMode(0x03);
+	MPU6050_setDLPFMode(0x02);
 	MPU6050_setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
 	MPU6050_setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
 	MPU6050_setSampleRateDiv(4);
+	delay_us(1000000);
 	MPU6050_calibration(3000); //accumulation gyroscope offset
 
 //	BMP085_begin(BMP085_ULTRAHIGHRES);

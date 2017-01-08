@@ -3,7 +3,7 @@
 
 void tx_update(vector4 summary_quatern, uint16_t computing_time){
 	static uint8_t skip_counter = 0;
-	const uint8_t skip_num = 3;
+	const uint8_t skip_num = 2;
 	if(skip_counter<skip_num){
 		skip_counter++;
 		return;
@@ -15,6 +15,7 @@ void tx_update(vector4 summary_quatern, uint16_t computing_time){
 	tmp_array[0] = euclid_angles.x*6;
 	tmp_array[1] = euclid_angles.y*6;
 	tmp_array[2] = euclid_angles.z*3;
+	/*
 	tmp_array[3] = (int16_t)(Ox.x*200.0);
 	tmp_array[4] = (int16_t)(Ox.y*200.0);
 	tmp_array[5] = (int16_t)(Ox.z*200.0);
@@ -24,6 +25,17 @@ void tx_update(vector4 summary_quatern, uint16_t computing_time){
 	tmp_array[9] = (int16_t)(Oz.x*200.0);
 	tmp_array[10] = (int16_t)(Oz.y*200.0);
 	tmp_array[11] = (int16_t)(Oz.z*200.0);
+	*/
+	tmp_array[3] = (int16_t)(Ox.x*200.0);
+	tmp_array[4] = (int16_t)(torque.x*200.0);
+	tmp_array[5] = (int16_t)(Ox.z*200.0);
+	tmp_array[6] = (int16_t)(Oy.x*200.0);
+	tmp_array[7] = (int16_t)(torque.y*200.0);
+	tmp_array[8] = (int16_t)(Oy.z*200.0);
+	tmp_array[9] = (int16_t)(Oz.x*200.0);
+	tmp_array[10] = (int16_t)(torque.z*200.0);
+	tmp_array[11] = (int16_t)(Oz.z*200.0);
+
 	tmp_array[12] = computing_time;
     load_tx_buffer(tmp_array);
 	transmit_masked_channal();
