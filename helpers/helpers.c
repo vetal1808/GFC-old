@@ -66,6 +66,16 @@ float limit(float value, float limit){
 		return -limit;
 	return value;
 }
+void limit_value16(int16_t * val, int16_t lim){
+	if(*val > lim)
+	{
+		*val =  lim;
+	}
+	else if(*val < -lim)
+	{
+		*val =  -lim;
+	}
+}
 void euclid_from_quatern(vector4 q ,vector3_int16 * return_vector)
 {
 	return_vector->x = atan2 (2*(q.q0*q.q1+q.q2*q.q3),1-2*(q.q1*q.q1+q.q2*q.q2))*rad_to_minuteArc;

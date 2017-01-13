@@ -60,13 +60,13 @@ void ESC_set_power(uint16_t * val)
 	TIM2->CCR4=val[3]+min_pwm;
 }
 void update_rotors(rotor4 thrust4, uint8_t rotor_mask){
-	if(!(rotor_mask & 1<<0))
+	if(!(rotor_mask & (1<<0)))
 		thrust4.LFW = 0;
-	if(!(rotor_mask & 1<<1))
+	if(!(rotor_mask & (1<<1)))
 		thrust4.RFC = 0;
-	if(!(rotor_mask & 1<<2))
+	if(!(rotor_mask & (1<<2)))
 		thrust4.RBW = 0;
-	if(!(rotor_mask & 1<<3))
+	if(!(rotor_mask & (1<<3)))
 		thrust4.LBC = 0;	
 	uint16_t tmp[4] = {thrust4.LFW, thrust4.RFC, thrust4.RBW, thrust4.LBC};
 	ESC_set_power(tmp);

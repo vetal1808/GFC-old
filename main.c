@@ -35,13 +35,21 @@ int main()
 		MadgwickAHRSupdateIMU(gyro.x, gyro.y, gyro.z, accel.x, accel.y, accel.z);
 
 		vector4 RC_quaternion;
-		rx_update(&RC_quaternion, &average_thrust);
+		vector3 gyro_shift;
+		uint8_t motor_mask;
+		rx_update(&RC_quaternion, &gyro_shift, &average_thrust, &motor_mask);
 		vector4 real_quaternion = quaterns_multiplication(q, offset_q);
 		vector4 result_quaternion = quaterns_multiplication(RC_quaternion, real_quaternion);
-	
+		
+
+		gyro.x -= gyro_shift.x;
+		gyro.y -= gyro_shift.y;
+		gyro.z -= gyro_shift.z;
+
+
 		stab_algorithm(result_quaternion, gyro, &rotor4_thrust, average_thrust);
 
-		update_rotors(rotor4_thrust, 0x0F);
+		update_rotors(rotor4_thrust, motor_mask);
 
 		tx_update(result_quaternion, micros()-sync_time);
 
