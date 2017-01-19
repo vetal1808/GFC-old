@@ -25,7 +25,7 @@ void receive_all_available(){
 void transmit_masked_channal(){
 	uint8_t i = 0;
 	for(i=0;i<tx_channal_num;i++){
-		if(tx_mask && (1<<i)){
+		if(tx_mask & (1<<i)){
 			uint8_t tmp_buff[package_size+2];
 			itoa((tx_channal[i]),(char *)tmp_buff+1,10);
 			int j;
@@ -44,15 +44,21 @@ void transmit_masked_channal(){
 void set_tx_mask(uint32_t val){
 	tx_mask = val;
 }
-void load_tx_buffer(int16_t * p){
+void load_tx_buffer(int16_t * p, uint8_t st_pos, uint8_t num){
 	uint8_t i = 0;
-	for(i = 0; i < tx_channal_num;i++)
-		tx_channal[i] = p[i];
+	for(i = 0; (i < num) && (st_pos < tx_channal_num);i++)
+	{
+		tx_channal[st_pos] = p[i];
+		st_pos++;
+	}
 }
-void get_rx_buffer(int16_t * p){
+void get_rx_buffer(int16_t * p, uint8_t st_pos, uint8_t num){
 	uint8_t i = 0;
-	for(i = 0; i < rx_channal_num;i++)
-		p[i] = rx_channal[i];
+	for(i = 0; (i < num) && (st_pos < tx_channal_num);i++)
+	{
+		p[i] = rx_channal[st_pos];
+		st_pos++;
+	}
 }
 void add_to_channal(int16_t val, int16_t channal){
 	rx_channal[channal]+=val;

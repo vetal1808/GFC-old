@@ -13,10 +13,7 @@
 #include <math.h>
 
 #define degree_to_int 60
-#define frq 250
-#define update_period_in_us 1000000/frq
-#define update_period_in_ms (float)update_period_in_us/1000.0f
-#define update_period_in_sec (float)update_period_in_us/1000000.0f
+
 #define rad_to_minuteArc 3437.746770784939
 #define minuteArc_to_rad 2.908882086e-4
 
@@ -34,7 +31,7 @@ typedef struct{
    int16_t x, y, z;
 } vector3_int16;
 
-
+vector3 vector3_sub(vector3 a, vector3 b);
 int32_t my_atoi(uint8_t *buf, uint8_t l);
 int16_t degree_sub360(int16_t val1, int16_t val2);
 float limit(float value, float limit);
@@ -46,4 +43,5 @@ vector4 quaterns_multiplication(vector4 A, vector4 B);
 vector4 euclid_to_quaterion(vector3 euclid);
 void euclid_from_quatern(vector4 q ,vector3_int16 * return_vector);
 void rotate_vector3_by_quatern(vector4 q, vector3 * return_vector);
+void load_euclid_angle_telemetry(vector4 * q);
 #endif /* HELPERS_H_ */

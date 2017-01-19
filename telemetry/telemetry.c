@@ -1,7 +1,6 @@
 #include "telemetry.h"
 #include "stab_alg.h"
-
-void tx_update(vector4 summary_quatern, uint16_t computing_time){
+void tx_update(){
 	static uint8_t skip_counter = 0;
 	const uint8_t skip_num = 2;
 	if(skip_counter<skip_num){
@@ -9,67 +8,35 @@ void tx_update(vector4 summary_quatern, uint16_t computing_time){
 		return;
 	}
 	skip_counter = 0;
-	vector3_int16 euclid_angles;
-	euclid_from_quatern(summary_quatern, &euclid_angles);
-    int16_t tmp_array[rx_channal_num];
-	tmp_array[0] = euclid_angles.x*6;
-	tmp_array[1] = euclid_angles.y*6;
-	tmp_array[2] = euclid_angles.z*3;
-	tmp_array[3] = (int16_t)(Ox.x*200.0);
-	tmp_array[4] = (int16_t)(Ox.y*200.0);
-	tmp_array[5] = (int16_t)(Ox.z*200.0);
-	tmp_array[6] = (int16_t)(Oy.x*200.0);
-	tmp_array[7] = (int16_t)(Oy.y*200.0);
-	tmp_array[8] = (int16_t)(Oy.z*200.0);
-	tmp_array[9] = (int16_t)(Oz.x*200.0);
-	tmp_array[10] = (int16_t)(Oz.y*200.0);
-	tmp_array[11] = (int16_t)(Oz.z*200.0);
-
-
-	tmp_array[12] = computing_time;
-    load_tx_buffer(tmp_array);
 	transmit_masked_channal();
 }
 
-void rx_update(vector4 * RC_quaternion, vector3 * gyro_shift, float * avarage_thrust, uint8_t * motor_mask){
+
+void rx_update(){
     receive_all_available();
-    int16_t rx_array[rx_channal_num];
-    get_rx_buffer(rx_array);
-	
-	set_P_gain((float)(rx_array[3]*4));
-	set_I_gain((float)(rx_array[4]*4));
-	set_D_gain((float)(rx_array[5]));
-	set_P_limit((float)(rx_array[6]));
-	set_I_limit((float)(rx_array[7]));
-	set_D_limit((float)(rx_array[8]));
-	*motor_mask = rx_array[10];
-	set_tx_mask(rx_array[11]);
+    int16_t tmp;
+    get_rx_buffer(&tmp, TX_MASK, 1);
+	set_tx_mask(tmp);
 	add_to_channal(-1,12);
 
-	if (rx_array[12]<1)
-	{
-		//if lose connection with pilot set half-thrust and zero angles
-		*avarage_thrust = (float)(rx_array[9]/2);
-		rx_array[0] = 0;
-		rx_array[1] = 0;
-	}
-	else
-		*avarage_thrust = (float)(rx_array[9]);
-	calculate_RC_angles((vector3_int16){rx_array[0], rx_array[1], rx_array[2]}, RC_quaternion, gyro_shift);
-
-
-
-	/*
-		rx_array[10] - motor_mask
-		rx_array[11] - transmit_mask
-		rx_array[12] - lose connection
-		
-	*/
 }
 
-void calculate_RC_angles(vector3_int16 RC_raw_data, vector4 * return_quaternion, vector3 * gyro_shift){
+int8_t get_RC_state(vector4 * RC_quaternion, vector3 * RC_spin, int16_t * thrust){
 	static float RC_yaw = 0.0;
 	static vector3_int16 RC_raw_data_prev = {0, 0, 0};
+	
+	vector3_int16 RC_raw_data;
+	get_rx_buffer((int16_t *)&RC_raw_data, RC_ANGLES, 3);
+	get_rx_buffer(thrust, THRUST, 1);
+	int16_t is_RC_connected;
+	get_rx_buffer(&is_RC_connected, LOST_CONNECTION_COUNTER, 1);
+	if (is_RC_connected<1)
+	{
+		//if lose connection with pilot set half-thrust and zero angles
+		*thrust /= 2;
+		RC_raw_data.x = 0;
+		RC_raw_data.y = 0;
+	}
 	
 	vector3_int16 delta;
 	delta.x = RC_raw_data.x - RC_raw_data_prev.x;
@@ -87,9 +54,13 @@ void calculate_RC_angles(vector3_int16 RC_raw_data, vector4 * return_quaternion,
 	RC_angles.x = RC_raw_data_prev.x*minuteArc_to_rad;
 	RC_angles.y = RC_raw_data_prev.y*minuteArc_to_rad;
 	RC_angles.z = RC_yaw;
-	*return_quaternion = euclid_to_quaterion(RC_angles);
+	*RC_quaternion = euclid_to_quaterion(RC_angles);
 
-	gyro_shift->x = delta.x*minuteArc_to_rad*frq;
-	gyro_shift->y = delta.y*minuteArc_to_rad*frq;
-	gyro_shift->z = delta_yaw;
+	RC_spin->x = delta.x*minuteArc_to_rad*frq;
+	RC_spin->y = delta.y*minuteArc_to_rad*frq;
+	RC_spin->z = delta_yaw;
+	if (is_RC_connected>0)
+		return 1;
+	else
+		return 0;
 }

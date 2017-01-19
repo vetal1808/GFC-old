@@ -206,7 +206,7 @@ uint32_t BMP085_meagure_press(){
 void BMP085_set_zero_pressure(uint32_t z){
 	BMP_zero_press = z;
 }
-#ifdef BMP085_handler
+
 
 void BMP085_Handler(){
 	#define len 32
@@ -266,5 +266,5 @@ void BMP085_get_data(int32_t * altitude, int32_t * velocity){
 	*altitude = BMP_Alt_;
 	*velocity = BMP_velo_;
 }
-#endif
+
 
