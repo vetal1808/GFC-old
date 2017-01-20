@@ -19,7 +19,7 @@ void set_D_gain(float val);
 void set_P_limit(float val);
 void set_I_limit(float val);
 void set_D_limit(float val);
-
+void update_PID_config();
 void load_stab_algorithm_telemetry();
 
 #endif

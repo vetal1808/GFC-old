@@ -4,7 +4,7 @@
 #include "mpu6050.h"
 #include "MadgwickAHRS.h"
 #include "timer.h"
-#include "BMP085_timer.h"
+#include "BMP085_high.h"
 #include "gps_parser.h"
 #include "math.h"
 #include "helpers.h"
@@ -12,6 +12,7 @@
 #include "telemetry.h"
 #include "ESC_control.h"
 #include "quadcopter_config.h"
+#include "euclid_coord.h"
 
 void setup();
 
@@ -27,6 +28,7 @@ int main()
 	start_synchronization();
 	while(1)
 	{
+		int16_t tmp;
 		synchronous_delay(update_period_in_us);
 
 		MPU6050_getFloatMotion6(&accel, &gyro);
@@ -48,13 +50,14 @@ int main()
 		//experement for global positioning
 		BMP085_update();
 		update_altitude(accel,real_quaternion);
-
-		
-
+		tmp = (int16_t)get_alt_velocity();
+		load_tx_buffer(&tmp, ALTITUDE_VELOCITY, 1);
+		tmp = (int16_t)get_altitued();
+		load_tx_buffer(&tmp, RESERVED_CHANNAL0, 1);
 		//end of place for exp
 		stab_algorithm(need_quaternion, gyro, &rotor4_thrust, average_thrust);
 
-		int16_t tmp;
+
 		get_rx_buffer(&tmp, MOTOR_MASK, 1);
 		update_rotors(rotor4_thrust, tmp);
 
@@ -86,7 +89,7 @@ void setup(){
 	MPU6050_calibration(3000); //accumulation gyroscope offset
 
 	BMP085_begin(BMP085_ULTRAHIGHRES);
-	BMP085_set_zero_pressure(BMP085_meagure_press());
+	BMP085_set_zero_pressure(BMP085_measuring_pressure());
 	set_tx_mask(0xFF);
 	ESC_init();
 }

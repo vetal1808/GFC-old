@@ -5,8 +5,8 @@
  *      Author: vetal
  */
 
-#ifndef BMP085_timer_H_
-#define BMP085_timer_H_
+#ifndef BMP085_LOW_H_
+#define BMP085_LOW_H_
 
 #define BMP085_handler
 
@@ -38,28 +38,17 @@
 #define BMP085_READTEMPCMD          0x2E
 #define BMP085_READPRESSURECMD            0x34
 
-
+int16_t ac1, ac2, ac3, b1, b2, mb, mc, md;
+uint16_t ac4, ac5, ac6;
+uint8_t oversampling;
 
 	uint8_t BMP085_begin(uint8_t mode);  // by default go highres
-
-	void BMP085_readRawTemperature_reqest();
-	uint16_t BMP085_readRawTemperature_ask();
-	void BMP085_readRawPressure_reqest();
-	uint32_t BMP085_readRawPressure_ask();
-	int32_t BMP085_readPressure(uint16_t UT, uint32_t UP);
-	float BMP085_readAltitude(float pressure) ;
 
 	int32_t BMP085_computeB5(int32_t UT);
 	uint8_t BMP085_read8(uint8_t addr);
 	uint16_t BMP085_read16(uint8_t addr);
 	void BMP085_write8(uint8_t addr, uint8_t data);
-	void BMP085_update();
-	int32_t BMP085_get_altitude();
-	uint32_t BMP085_meagure_press();
-	void BMP085_set_zero_pressure(uint32_t z);
-	void BMP085_Handler();
 
-	void BMP085_get_data(int32_t * altitude, int32_t * velocity);
-	void BMP085_update();
+	
 
 #endif /* BMP085_H_ */

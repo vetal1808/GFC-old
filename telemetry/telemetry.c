@@ -14,10 +14,11 @@ void tx_update(){
 
 void rx_update(){
     receive_all_available();
-    int16_t tmp;
-    get_rx_buffer(&tmp, TX_MASK, 1);
-	set_tx_mask(tmp);
-	add_to_channal(-1,12);
+	uint16_t tmp[2];
+	get_rx_buffer(tmp, TX_MASK, 2);
+	uint32_t tmp2 = tmp[0]<<16 | tmp[1];
+	set_tx_mask(tmp2);
+	add_to_channal(-1,LOST_CONNECTION_COUNTER);
 
 }
 

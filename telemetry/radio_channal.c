@@ -4,7 +4,7 @@ USART_TypeDef * USART;
 
 volatile int16_t rx_channal[rx_channal_num];
 volatile int16_t tx_channal[tx_channal_num];
-int16_t tx_mask = 0;
+uint32_t tx_mask = 0;
 
 void set_USARTn(USART_TypeDef* USARTx){
 	USART = USARTx;
