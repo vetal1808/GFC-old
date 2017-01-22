@@ -29,7 +29,7 @@ void init_timer()
 	  NVIC_SetPriority(TIM4_IRQn, 1); //��������� ����������
 	  NVIC_EnableIRQ(TIM4_IRQn); //��������� ��������� ���������� �� ������� 4
 	  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;//������������ ������� TIM4
-	  TIM4->PSC = 72;
+	  TIM4->PSC = 71;
 	  TIM4->ARR = 0xFFFF;
 	  TIM4->DIER |= TIM_DIER_UIE; //��������� ���������� ��� ������������ ��������
 	  TIM4->CR1 |= TIM_CR1_CEN;//��������� ����

@@ -13,7 +13,7 @@
 #include "ESC_control.h"
 #include "quadcopter_config.h"
 #include "euclid_coord.h"
-
+#include "sonar.h"
 void setup();
 
 
@@ -48,6 +48,11 @@ int main()
 		vector4 need_quaternion = quaterns_multiplication(RC_quaternion, real_quaternion);//get quaternion to needed plane
 		
 		//experement for global positioning
+
+		sonar_update();
+		tmp =  get_sonar_distanse();
+		load_tx_buffer(&tmp, RESERVED_CHANNAL1, 1);
+
 		BMP085_update();
 		update_altitude(accel,real_quaternion);
 		tmp = (int16_t)get_alt_velocity();
@@ -55,6 +60,9 @@ int main()
 		tmp = (int16_t)get_altitued();
 		load_tx_buffer(&tmp, RESERVED_CHANNAL0, 1);
 		//end of place for exp
+
+
+
 		stab_algorithm(need_quaternion, gyro, &rotor4_thrust, average_thrust);
 
 
@@ -92,4 +100,5 @@ void setup(){
 	BMP085_set_zero_pressure(BMP085_measuring_pressure());
 	set_tx_mask(0xFF);
 	ESC_init();
+	init_sonar();
 }
