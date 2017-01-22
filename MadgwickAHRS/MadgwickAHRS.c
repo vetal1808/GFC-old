@@ -17,6 +17,7 @@
 
 #include "MadgwickAHRS.h"
 #include <math.h>
+#include "quadcopter_config.h"
 
 
 //---------------------------------------------------------------------------------------------------
@@ -211,6 +212,9 @@ void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, flo
 //---------------------------------------------------------------------------------------------------
 // Fast inverse square-root
 // See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
+vector4 GetMadgwickAHRSQuaternion(){
+	return q;
+}
 
 float invSqrt(float x) {
 	float halfx = 0.5f * x;

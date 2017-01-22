@@ -5,9 +5,10 @@
  *      Author: vetal
  */
 #include "stab_alg.h"
+#include "telemetry.h"
+#include "QUADCOPTER_CONFIG.h"
 
-
-#define loop_time 0.005
+#define loop_time update_period_in_sec
 
 float P_gain = 16.0, D_gain = 9.0, I_gain = 1.0;
 float P_limit = 100.0, D_limit = 100.0, I_limit = 0.0;
@@ -43,7 +44,7 @@ vector3 quaternion_decomposition(vector4 q){
 	return tmp;
 }
 
-void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, float average_thrust){
+void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, int16_t average_thrust){
 	static float integral_sum [3] = {0.0f, 0.0f, 0.0f};
 	vector3 axis_errors = quaternion_decomposition(quaternion);
 
@@ -62,7 +63,7 @@ void stab_algorithm(vector4 quaternion, vector3 gyro, rotor4 * rotor4_thrust, fl
 	torque.y = PID(axis_errors.y, gyro.y, integral_switcher, &integral_sum[1], &Oy);
 	torque.z = PID(axis_errors.z, gyro.z, integral_switcher, &integral_sum[2], &Oz);
 
-	*rotor4_thrust = calc_rotor4_thrust(torque, average_thrust);
+	*rotor4_thrust = calc_rotor4_thrust(torque, (float)average_thrust);
 }
 
 void set_P_gain(float val){
@@ -82,4 +83,33 @@ void set_I_limit(float val){
 }
 void set_D_limit(float val){
 	D_limit = val;
+}
+
+void update_PID_config(){
+	int16_t tmp[6];
+	get_rx_buffer(tmp, PID_GAIN, 6);
+	P_gain = (float)(tmp[0]*4);
+	I_gain = (float)(tmp[1]/2);
+	D_gain = (float)(tmp[2]*4);
+	P_limit = (float)(tmp[3]);
+	I_limit = (float)(tmp[4]);
+	D_limit = (float)(tmp[5]);
+
+}
+
+void load_stab_algorithm_telemetry(){	
+	int16_t tmp_array[9];	
+	const float scale = 200.0;
+
+	tmp_array[0] = (int16_t)(Ox.x*scale);
+	tmp_array[1] = (int16_t)(Ox.y*scale);
+	tmp_array[2] = (int16_t)(Ox.z*scale);
+	tmp_array[3] = (int16_t)(Oy.x*scale);
+	tmp_array[4] = (int16_t)(Oy.y*scale);
+	tmp_array[5] = (int16_t)(Oy.z*scale);
+	tmp_array[6] = (int16_t)(Oz.x*scale);
+	tmp_array[7] = (int16_t)(Oz.y*scale);
+	tmp_array[8] = (int16_t)(Oz.z*scale);
+
+	load_tx_buffer(tmp_array, PICTH_PID, 9);
 }

@@ -1,94 +1,26 @@
-/*
- * BMP085.c
- *
- *  Created on: 09.02.2016
- *      Author: vetal
- */
-#include "BMP085_timer.h"
-#include <math.h>
-#include "timer.h"
+#include "BMP085_high.h"
 
+uint32_t BMP_tmp1, BMP_tmp2;
 
-uint8_t oversampling;
-
-int16_t ac1, ac2, ac3, b1, b2, mb, mc, md;
-uint16_t ac4, ac5, ac6;
-
-
-//volatile float BMP_zero_press = 100000;
 float BMP_zero_press = 100000;
-volatile int32_t BMP_Altitude;
-volatile int32_t BMP_Alt_, BMP_velo_;
+volatile int32_t BMP_raw_altitude; 
+volatile int32_t BMP_altitude, BMP_velocity;
 
+void BMP085_Filtrate();
 
-
-uint8_t BMP085_begin(uint8_t mode) {
-  if (mode > BMP085_ULTRAHIGHRES)
-    mode = BMP085_ULTRAHIGHRES;
-  oversampling = mode;
-
-
-
-  if (BMP085_read8(0xD0) != 0x55)
-	  return 0;
-
-  /* read calibration data */
-  ac1 = BMP085_read16(BMP085_CAL_AC1);
-  ac2 = BMP085_read16(BMP085_CAL_AC2);
-  ac3 = BMP085_read16(BMP085_CAL_AC3);
-  ac4 = BMP085_read16(BMP085_CAL_AC4);
-  ac5 = BMP085_read16(BMP085_CAL_AC5);
-  ac6 = BMP085_read16(BMP085_CAL_AC6);
-
-  b1 = BMP085_read16(BMP085_CAL_B1);
-  b2 = BMP085_read16(BMP085_CAL_B2);
-
-  mb = BMP085_read16(BMP085_CAL_MB);
-  mc = BMP085_read16(BMP085_CAL_MC);
-  md = BMP085_read16(BMP085_CAL_MD);
-
-
-  return 255;
-}
-
-int32_t BMP085_computeB5(int32_t UT) {
-  int32_t X1 = (UT - (int32_t)ac6) * ((int32_t)ac5) >> 15;
-  int32_t X2 = ((int32_t)mc << 11) / (X1+(int32_t)md);
-  return X1 + X2;
-}
-
-uint8_t BMP085_read8(uint8_t a) {
-	uint8_t ret;
-	Status _status = I2C1_read_bytes(BMP085_I2CADDR, a, 1, &ret);
-
-	return ret;
-}
-
-uint16_t BMP085_read16(uint8_t a) {
-
-	uint8_t rx_buf[2];
-	Status _status = I2C1_read_bytes(BMP085_I2CADDR, a, 2, rx_buf);
-	return (((int16_t)rx_buf[0]) << 8) | rx_buf[1];
-}
-
-void BMP085_write8(uint8_t a, uint8_t d) {
-	Status _status = I2C1_write_bytes(BMP085_I2CADDR, a, 1, &d);
-}
-
-void BMP085_readRawTemperature_reqest()
-{
+void BMP085_readRawTemperature_reqest(){
 	BMP085_write8(BMP085_CONTROL, BMP085_READTEMPCMD);
 }
-uint16_t BMP085_readRawTemperature_ask()
-{
+
+uint16_t BMP085_readRawTemperature_ask(){
 	return BMP085_read16(BMP085_TEMPDATA);
 }
-void BMP085_readRawPressure_reqest()
-{
+
+void BMP085_readRawPressure_reqest(){
 	BMP085_write8(BMP085_CONTROL, BMP085_READPRESSURECMD + (oversampling << 6));
 }
-uint32_t BMP085_readRawPressure_ask()
-{
+
+uint32_t BMP085_readRawPressure_ask(){
 	uint16_t tmp[2];
 
 	tmp[0] = BMP085_read16(BMP085_PRESSUREDATA);
@@ -96,8 +28,8 @@ uint32_t BMP085_readRawPressure_ask()
 
 	return ((tmp[0]<<8 | tmp[1]) >> (8-oversampling));
 }
-int32_t BMP085_readPressure(uint16_t UT, uint32_t UP)
-{
+
+int32_t BMP085_CalculatePressure(uint16_t UT, uint32_t UP){
 	int32_t B3, B5, B6, X1, X2, X3, p;
 	uint32_t B4, B7;
 
@@ -138,47 +70,52 @@ int32_t BMP085_readPressure(uint16_t UT, uint32_t UP)
 	  return p;
 }
 
-float BMP085_readAltitude(float pressure)
-{
+float BMP085_CalculateAltitude(float pressure){
   return 4433000 * (1.0 - pow(pressure /BMP_zero_press,0.1903));
 }
 
 
-void BMP085_update()
-{
-	static uint8_t BMP_state = 0, BMP_temp_skip = 0;
-	static uint32_t start_time;
-	static uint32_t BMP_tmp1, BMP_tmp2;
+void BMP085_update(){
+    const uint8_t temp_meas_skip = 4;
+	static uint8_t BMP_state = 0, temp_meas_skip_counter = 0;
+	static uint32_t sync_time;
 
 	switch (BMP_state){
-		case 0 :{
+		case 0 :
+        {
 			BMP085_readRawTemperature_reqest();
-			start_time = micros();
+			sync_time = micros();
 			BMP_state++;
 			break;
 		}
-		case 1 :{
-			if(micros() - start_time > 4499){
+		case 1 :
+        {
+			if(micros() - sync_time > 4499){
 				BMP_tmp1 = BMP085_readRawTemperature_ask();
 				BMP085_readRawPressure_reqest();
 				BMP_state++;
-				start_time = micros();
+				sync_time = micros();
 			}
 			break;
 		}
-		case 2 :{
-			if(micros() - start_time > 25499){
+		case 2 :
+        {
+			if(micros() - sync_time > 25499){
 				BMP_tmp2 = BMP085_readRawPressure_ask();
-				BMP_Altitude = BMP085_readAltitude(BMP085_readPressure(BMP_tmp1,BMP_tmp2));
-				BMP085_Handler();
-				if(BMP_temp_skip < 4){ // skip temperature reading 5 times
+                BMP_raw_altitude = BMP085_CalculateAltitude((float)BMP085_CalculatePressure(BMP_tmp1,BMP_tmp2));
+                #ifdef use_fir_filter
+                BMP085_Filtrate();
+                #endif 
+				if(temp_meas_skip_counter < temp_meas_skip){ // skip temperature reading 5 times
 					BMP085_readRawPressure_reqest();
-					start_time = micros();
-					BMP_temp_skip++;
+					sync_time = micros();
+					temp_meas_skip_counter++;
 				}
 				else {
-					BMP_state = 0;
-					BMP_temp_skip = 0;
+                    BMP085_readRawTemperature_reqest();
+                    sync_time = micros();
+					BMP_state = 1;
+					temp_meas_skip_counter = 0;
 				}
 			}
 			break;
@@ -190,10 +127,11 @@ void BMP085_update()
 		}
 	}
 }
+
 int32_t BMP085_get_altitude(){
-	return BMP_Altitude;
+	return BMP_raw_altitude;
 }
-uint32_t BMP085_meagure_press(){
+uint32_t BMP085_measuring_pressure(){
 	uint32_t BMP_tmp1, BMP_tmp2;
 	BMP085_readRawTemperature_reqest();
 	delay_us(4500);
@@ -201,14 +139,14 @@ uint32_t BMP085_meagure_press(){
 	BMP085_readRawPressure_reqest();
 	delay_us(24500);
 	BMP_tmp2 = BMP085_readRawPressure_ask();
-	return BMP085_readPressure(BMP_tmp1,BMP_tmp2);
+	return BMP085_CalculatePressure(BMP_tmp1,BMP_tmp2);
 }
 void BMP085_set_zero_pressure(uint32_t z){
 	BMP_zero_press = z;
 }
-#ifdef BMP085_handler
 
-void BMP085_Handler(){
+#ifdef use_fir_filter
+void BMP085_Filtrate(){
 	#define len 32
     const int32_t FIRCoef[len] = {
     		2271,
@@ -249,22 +187,21 @@ void BMP085_Handler(){
 	uint8_t i;
 	for(i = len-1; i != 0; i--)
 		alt_seq[i] = alt_seq[i-1];
-	alt_seq[0] = BMP_Altitude;
+	alt_seq[0] = BMP_raw_altitude;
 	for(i = len-1; i != 0; i--)
 		alt_velo_seq[i] = alt_velo_seq[i-1];
 	alt_velo_seq[0] = (alt_seq[0] - alt_seq[1])*36;
 	int64_t	tmp = 0;
 	for(i = 0; i < len; i++)
 		tmp+=alt_seq[i]*FIRCoef[i];
-	BMP_Alt_ = tmp/262144;
+	BMP_altitude = tmp/262144;
 	tmp = 0;
 	for(i = 0; i < len; i++)
 		tmp+=alt_velo_seq[i]*FIRCoef[i];
-	BMP_velo_ = tmp/262144;
-}
-void BMP085_get_data(int32_t * altitude, int32_t * velocity){
-	*altitude = BMP_Alt_;
-	*velocity = BMP_velo_;
+	BMP_velocity = tmp/262144;
 }
 #endif
-
+void BMP085_get_data(int32_t * altitude, int32_t * velocity){
+	*altitude = BMP_altitude;
+	*velocity = BMP_velocity;
+}

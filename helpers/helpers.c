@@ -5,6 +5,7 @@
  *      Author: vetal
  */
 #include "helpers.h"
+#include "telemetry.h"
 
 int32_t my_atoi (uint8_t *buf, uint8_t l)
 {
@@ -83,6 +84,15 @@ void euclid_from_quatern(vector4 q ,vector3_int16 * return_vector)
 	return_vector->z = -atan2 (2*(q.q0*q.q3+q.q1*q.q2),1-2*(q.q2*q.q2+q.q3*q.q3))* rad_to_minuteArc;
 }
 
+void load_euclid_angle_telemetry (vector4 * q){
+	vector3_int16 euclid_angles;
+	euclid_from_quatern(*q, &euclid_angles);
+    int16_t tmp_array[3];
+	tmp_array[0] = euclid_angles.x*6;
+	tmp_array[1] = euclid_angles.y*6;
+	tmp_array[2] = euclid_angles.z*3;
+	load_tx_buffer(tmp_array, ANGLES, 3);
+}
 
 void rotate_vector3_by_quatern(vector4 q, vector3 * return_vector)
 {
@@ -103,4 +113,11 @@ void rotate_vector3_by_quatern(vector4 q, vector3 * return_vector)
 	return_vector->x = 2.0f * ((0.5f - q2q2 - q3q3)*_x + (q1q2 - q0q3)*(_y)		 + (q1q3 + q0q2)*(_z));
 	return_vector->y = 2.0f * ((q1q2 + q0q3)*_x 		 + (0.5f - q1q1 - q3q3)*(_y) + (q2q3 - q0q1)*(_z));
 	return_vector->z = 2.0f * ((q1q3 - q0q2)*_x 		 + (q2q3 + q0q1)*(_y) 	     + (0.5f - q1q1 - q2q2)*(_z));
+}
+
+vector3 vector3_sub(vector3 a, vector3 b){
+	a.x -= b.x;
+	a.y -= b.y;
+	a.z -= b.z;
+	return a;
 }
