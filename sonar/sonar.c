@@ -6,7 +6,7 @@
  * A10 - trig
  * */
 
-#include "STM32F10x_TIM.h"
+#include "timer.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_exti.h"
@@ -15,6 +15,10 @@
 #define trig GPIO_Pin_12
 volatile uint16_t distanse = 0;
 uint32_t sync_time_ = 0;
+
+void init_gpio();
+void init_external_interupt();
+
 
 void init_sonar(){
 	init_gpio();
@@ -55,8 +59,6 @@ void init_external_interupt(){
 
 void EXTI15_10_IRQHandler(void)
 {
-	static uint32_t last_call = 0;
-
 	if(EXTI->PR & 1<<echo)
 	{
 		distanse = ((uint16_t)(micros() - sync_time_)*174)/1024;
@@ -71,7 +73,6 @@ void sonar_start(){
 
 void sonar_update(){
 	const uint32_t period_us = 35000; //TODO may be sonar can work faster
-	static uint8_t state = 0;
 	if ((micros() - sync_time_)>=period_us) {
 		sonar_start();
 		sync_time_ = micros();
